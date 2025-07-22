@@ -24,9 +24,9 @@ class MerkleTree:
         """
         assert all(c in string.hexdigits for c in root), f"{root} is not a valid hexadecimal string."
 
-        assert set(H.split(" ")).issubset(
-            {"OP_RIPEMD160", "OP_SHA1", "OP_SHA256", "OP_HASH160", "OP_HASH256"}
-        ), f"{H} is not a valid hash function."
+        assert set(H.split(" ")).issubset({"OP_RIPEMD160", "OP_SHA1", "OP_SHA256", "OP_HASH160", "OP_HASH256"}), (
+            f"{H} is not a valid hash function."
+        )
 
         assert depth > 0
 
@@ -66,9 +66,7 @@ class MerkleTree:
         # stack in: [..., aux_i, bit_i, ..., d]
         # stack out: [<purported r>]
         out += Script.parse_string(self.H)
-        out += Script.parse_string(
-            " ".join([f"OP_SWAP OP_IF OP_SWAP OP_ENDIF OP_CAT {self.H}"] * (self.depth - 1))
-        )
+        out += Script.parse_string(" ".join([f"OP_SWAP OP_IF OP_SWAP OP_ENDIF OP_CAT {self.H}"] * (self.depth - 1)))
 
         # stack in: [<purported r>]
         # stack out: [fail if <purported r> != self.root else 1]
