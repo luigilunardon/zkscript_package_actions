@@ -11,5 +11,3 @@ fq_script = Fq(q=q)
 fq2_script = Fq2(q=q, non_residue=NON_RESIDUE_FQ, mul_by_fq2_non_residue=Fq2.mul_by_u)
 # Fq4 implementation
 fq4_script = Fq2Over2ResidueEqualU(q=q, base_field=fq2_script, gammas_frobenius=GAMMAS)
-
-
