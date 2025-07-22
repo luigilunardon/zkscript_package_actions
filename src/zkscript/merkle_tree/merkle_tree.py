@@ -8,30 +8,30 @@ from tx_engine import Script
 class MerkleTree:
     """Class implementing methods to generate locking for Merkle paths verification."""
 
-    def __init__(self, root: str, hash_function: str, depth: int):
+    def __init__(self, root: str, H: str, depth: int):
         """Initialize a MerkleTree instance.
 
         Args:
             root (str): The root hash of the Merkle Tree, provided as a hexadecimal string.
-            hash_function (str): Hash function used in the Merkle Tree, the hash function must be a valid hash opcode or
+            H (str): Hash function used in the Merkle Tree, the hash function must be a valid hash opcode or
                 a sequence of valid hash opcodes. Valid hash opcodes are `OP_RIPEMD160, OP_SHA1, OP_SHA256, OP_HASH160,`
                 `OP_HASH256`
             depth (int): Number of levels in the Merkle tree.
 
         Raises:
-            AssertionError: If `root` is not a hexadecimal or `hash_function` contains invalid opcodes.
+            AssertionError: If `root` is not a hexadecimal or `H` contains invalid opcodes.
 
         """
         assert all(c in string.hexdigits for c in root), f"{root} is not a valid hexadecimal string."
 
-        assert set(hash_function.split(" ")).issubset(
+        assert set(H.split(" ")).issubset(
             {"OP_RIPEMD160", "OP_SHA1", "OP_SHA256", "OP_HASH160", "OP_HASH256"}
-        ), f"{hash_function} is not a valid hash function."
+        ), f"{H} is not a valid hash function."
 
         assert depth > 0
 
         self.root = root
-        self.hash_function = hash_function
+        self.H = H
         self.depth = depth
 
     def locking_merkle_proof_with_bit_flags(
@@ -57,7 +57,7 @@ class MerkleTree:
             Locking script for verifying a Merkle path using a bit flag to identify right and left nodes.
 
         Notes:
-            - Assumes `self.hash_function` is a valid Bitcoin Script hash function (e.g., `OP_SHA256`).
+            - Assumes `self.H` is a valid Bitcoin Script hash function (e.g., `OP_SHA256`).
             - `self.root` should be set to the expected Merkle root.
 
         """
@@ -65,9 +65,9 @@ class MerkleTree:
 
         # stack in: [..., aux_i, bit_i, ..., d]
         # stack out: [<purported r>]
-        out += Script.parse_string(self.hash_function)
+        out += Script.parse_string(self.H)
         out += Script.parse_string(
-            " ".join([f"OP_SWAP OP_IF OP_SWAP OP_ENDIF OP_CAT {self.hash_function}"] * (self.depth - 1))
+            " ".join([f"OP_SWAP OP_IF OP_SWAP OP_ENDIF OP_CAT {self.H}"] * (self.depth - 1))
         )
 
         # stack in: [<purported r>]
@@ -100,7 +100,7 @@ class MerkleTree:
             Locking script for verifying a Merkle path using pairs of auxiliary values.
 
         Notes:
-            - Requires `self.hash_function` to be a valid Bitcoin Script hash function (e.g., `OP_SHA256`).
+            - Requires `self.H` to be a valid Bitcoin Script hash function (e.g., `OP_SHA256`).
             - `self.root` must be set to the expected Merkle root.
 
         """
@@ -108,8 +108,8 @@ class MerkleTree:
 
         # stack in: [..., aux_{0,i}, aux_{1,i}, ..., d]
         # stack out: <purported r>
-        out += Script.parse_string(self.hash_function)
-        out += Script.parse_string(" ".join([f"OP_SWAP OP_CAT OP_CAT {self.hash_function}"] * (self.depth - 1)))
+        out += Script.parse_string(self.H)
+        out += Script.parse_string(" ".join([f"OP_SWAP OP_CAT OP_CAT {self.H}"] * (self.depth - 1)))
 
         # stack in: [<purported r>]
         # stack out: [fail if <purported r> != self.root else 1]
