@@ -1,0 +1,53 @@
+name: Pull Request checks
+
+on:
+  pull_request:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  format-lint-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install requirements.txt
+          pip install ruff pytest
+
+      - name: Format and Lint
+        run: |
+          ruff format
+          ruff check --fix || true
+
+      - name: Commit format
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          if git diff --cached --quiet; then
+            echo "No formatting changes to commit."
+          else
+            git commit -m "chore: format and lint"
+            git push
+          fi
+
+      - name: Lint
+        run: ruff check
+
+      - name: Run tests
+        run: pytest tests --runslow
